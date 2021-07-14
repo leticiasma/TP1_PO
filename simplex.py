@@ -23,24 +23,25 @@ class Simplex:
         A_aux = self.A
         identidade = np.eye(self.n)#, dtype=int)
 
-        print("matriz A de restricoes: \n{}".format(A_aux))
-        print("matriz identidade: \n{}".format(identidade))
+        #print("matriz A de restricoes: \n{}".format(A_aux))
+        #print("matriz identidade: \n{}".format(identidade))
 
         A_aux = np.concatenate((A_aux, identidade), axis=1)
 
-        print("\n\nPL AUXILIAR:\n")
-        print("n restricoes: {}".format(self.n))
-        print("m variaveis: {}".format(m_aux))
-        print("vetor de custo c: {}".format(c_aux))
-        print("matriz A de restricoes: \n{}".format(A_aux))
-        print("vetor b: {}".format(self.b))
+        #print("\n\nPL AUXILIAR:\n")
+        #print("n restricoes: {}".format(self.n))
+        #print("m variaveis: {}".format(m_aux))
+        #print("vetor de custo c: {}".format(c_aux))
+        #print("matriz A de restricoes: \n{}".format(A_aux))
+        #print("vetor b: {}".format(self.b))
         
-        self.tableau_auxiliar(m_aux, c_aux, A_aux)
+        self.pl_aux()
 
-        if(self.val_obj < 0):
-            print("inviavel")
+        if(self.val_obj_aux < 0):
+            self.print_inviavel()
         else:
-            print("viavel")
+            print("otima ou ilimitada")
+            self.tableau()
 
         #if(booleano):
         #    print("Eh viavel")
@@ -49,65 +50,117 @@ class Simplex:
 
         #Resulver seu Tableau
 
-    def print_tableau(self):
-        #print("\n\nTABLEAU\n")
-        print(self.certificado_otimo_tb,"|",self.c_tb,"|",self.val_obj_tb)
-        for i in range (self.n):
-            print(self.extensao_tb[i],"|",self.A_tb[i],"|",self.b_tb[i])
-        print("\n\n")
-
-    def tableau_auxiliar(self, m, c, A): #n e b não mudam para PL original e auxiliar
-        self.certificado_otimo = np.zeros(self.n)
-        self.extensao = np.eye(self.n)
-
-        self.c_tableau = c
-        for i in range(m):
-            if(self.c_tableau[i] != 0):
-                self.c_tableau[i] *= -1
-
-        self.val_obj = 0
-
-        self.print_tableau(A)
-
+    def print_inviavel(self):
+        print("inviavel")
+        certificado = ""
         for i in range(self.n):
-            self.certificado_otimo -= self.extensao[i]
-            self.c_tableau -= A[i]
-            self.val_obj -= self.b[i]
+            certificado += str(self.certificado_otimo_aux[i])+" "
+        print(certificado) #Printa como float... No PDF é int, mas não sei se tem caso float de verdade, acho que sim
 
-        self.print_tableau(A)
+    def print_tableau(self, tipo):
 
-        '''for i in range(m):
-            if(c[i] < 0):
+        if(tipo == "pl"):
+            print(self.certificado_otimo_tb,"|",self.c_tb,"|",self.val_obj_tb)
+            for i in range (self.n):
+                print(self.extensao_tb[i],"|",self.A_tb[i],"|",self.b_tb[i])
+            print("\n\n")
+        elif(tipo == "aux"):
+            print(self.certificado_otimo_aux,"|",self.c_aux,"|",self.val_obj_aux)
+            for i in range (self.n):
+                print(self.extensao_aux[i],"|",self.A_aux[i],"|",self.b_aux[i])
+            print("\n\n")
 
-                print("\nc negativo igual a "+str(c[i])+" na posicao "+str(i))
+    def pl_aux(self): #n e b não mudam para PL original e auxiliar
+        self.m_aux = (self.m)+self.n
 
-                linha_pivo = 0
-                coluna_pivo = 0
-                pivo = A[0][0]
+        self.certificado_otimo_aux = np.zeros(self.n)
 
-                for j in range(self.n):
+        self.c_aux = np.ones(self.m_aux)
+        for i in range(self.m):
+            self.c_aux[i] = 0
 
-                    print("\nAnalisando se A["+str(j)+"]["+str(i)+"] = "+str(A[j][i])+" é diferente de zero\ne se b["+str(j)+"]/A["+str(j)+"]["+str(i)+"]="+str(self.b[j])+"/"+str(A[j][i])+" < A["+str(linha_pivo)+"]["+str(coluna_pivo)+"] = "+str(A[linha_pivo][coluna_pivo])+"\n")
+        self.val_obj_aux = 0
 
-                    if ((A[j][i] != 0.0) and (self.b[j]/A[j][i] < A[linha_pivo][coluna_pivo])):
-                        print("Entrou no if!")
-                        linha_pivo = j
-                        coluna_pivo = i
-                        pivo = A[j][i]
+        self.extensao_aux = np.eye(self.n)
+
+        self.A_aux = self.A
+        identidade = np.eye(self.n)
+        self.A_aux = np.concatenate((self.A_aux, identidade), axis=1)
+
+        self.b_aux = self.b
+
+        #self.print_tableau("aux")
+
+        #FAZER O CASO DE ALGUM B SER NEGATIVO E JÁ REGISTRANDO A OP NO TABLEAU NA EXTENSAO
+        for i in range(self.n):
+            self.certificado_otimo_aux -= self.extensao_aux[i]
+            self.c_aux -= self.A_aux[i][:]
+            self.val_obj_aux -= self.b_aux[i]
+        
+        #self.print_tableau("aux")
+
+        tem_negativo_aux, j = self.tem_ci_negativo_aux()
+
+        while(tem_negativo_aux):
+            #Achar a linha na coluna j com a menor razao b/A
+            razao = 2**10
+            linha_pivo = 0
+            coluna_pivo = 0
                 
-                print("\nO pivo eh: "+str(pivo)+" da linha "+str(linha_pivo)+" e coluna "+str(coluna_pivo))
-                if(np.sign(pivo) == -1):
-                    A[linha_pivo] /= -1*pivo
-                else:
-                    A[linha_pivo] /= pivo 
+            for i in range(self.n): #i é linha
+                if(self.A_aux[i][j] > 0.0 and self.b_aux[i]/self.A_aux[i][j] < razao):
+                    linha_pivo = i
+                    coluna_pivo = j
+                    razao = self.b_aux[i]/self.A_aux[i][j]
+                
+            #Pivotear: Eliminacao Gaussiana de forma que apenas A[linha_pivo][coluna_pivo] seja 1 e o restante da coluna seja 0
+            pivo = self.A_aux[linha_pivo][coluna_pivo]
+            self.extensao_aux[linha_pivo] /= pivo #talvez nem precise disso pois não faz parte do exercício
+            self.A_aux[linha_pivo] /= pivo
+            self.b_aux[linha_pivo] /= pivo
 
-                self.print_tableau(A)
+            #print("\n\nPIVOTEANDO")
+            #self.print_tableau()
 
-        #self.print_tableau(A)'''
+            valor_op = -1*self.c_aux[coluna_pivo]
+                
+            self.certificado_otimo_aux += valor_op*self.extensao_aux[linha_pivo][:]   
+            self.c_aux += valor_op*self.A_aux[linha_pivo][:]
+            self.val_obj_aux += valor_op*self.b_aux[linha_pivo]
 
-    def tem_ci_negativo(self): #ACHO QUE NAO PODIA DAR SO UMA PASSADA POIS PODE SURGIR NEGATIVOS ATRAS
+            #print("\n\nZERANDO PRIMEIRA LINHA")
+            #self.print_tableau()
+
+            for i in range(self.n):
+                if(i != linha_pivo):
+                    elemento = self.A_aux[i][coluna_pivo]
+
+                    if(np.sign(elemento) == 1 or np.sign(elemento) == -1):
+                        valor_op = -1*elemento
+                            
+                        self.extensao_aux[i][:] += valor_op*self.extensao_aux[linha_pivo][:] 
+                        self.A_aux[i][:] += valor_op*self.A_aux[linha_pivo][:]
+                        self.b_aux[i] += valor_op*self.b_aux[linha_pivo]
+
+                    else:
+                        continue
+
+            #print("\n\nZERANDO DEMAIS LINHAS")
+            #self.print_tableau()
+
+            tem_negativo_aux, j = self.tem_ci_negativo_aux()
+            
+        #self.print_tableau("aux")
+
+    def tem_ci_negativo(self): #ACHO QUE NAO PODIA DAR SO UMA PASSADA POIS PODE SURGIR NEGATIVOS ATRAS. Pensar em um caso que acontece isso
         for j in range (self.m_tb): #j é coluna
             if(self.c_tb[j] < 0):
+                return True, j    
+        return False, -1
+
+    def tem_ci_negativo_aux(self): #ACHO QUE NAO PODIA DAR SO UMA PASSADA POIS PODE SURGIR NEGATIVOS ATRAS. Pensar em um caso que acontece isso
+        for j in range (self.m_aux): #j é coluna
+            if(self.c_aux[j] < 0):
                 return True, j    
         return False, -1
 
@@ -187,7 +240,7 @@ class Simplex:
 
             tem_negativo, j = self.tem_ci_negativo()
             
-        self.print_tableau()
+        self.print_tableau("pl")
     
 
 

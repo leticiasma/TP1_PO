@@ -26,8 +26,8 @@ for i in range(n):
 
 simplex = Simplex(n,m,c,A,b)
 
-#simplex.testa_viabilidade()
+simplex.testa_viabilidade()
 
-simplex.tableau()
+#simplex.tableau()
 
 entrada.close()
