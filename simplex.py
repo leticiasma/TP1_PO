@@ -40,7 +40,7 @@ class Simplex:
         if(self.val_obj_aux < 0):
             self.print_inviavel()
         else:
-            print("otima ou ilimitada")
+            #print("otima ou ilimitada")
             self.tableau()
 
         #if(booleano):
@@ -49,6 +49,15 @@ class Simplex:
         #   print("Eh inviavel")
 
         #Resulver seu Tableau
+    
+    def print_otima(self):
+        print("otima")
+        print(str(self.val_obj_tb))
+        #Faltou printar uma solução que atinge o valor ótimo
+        certificado = ""
+        for i in range(self.n):
+            certificado += str(self.certificado_otimo_tb[i])+" "
+        print(certificado)
 
     def print_inviavel(self):
         print("inviavel")
@@ -57,6 +66,9 @@ class Simplex:
             certificado += str(self.certificado_otimo_aux[i])+" "
         print(certificado) #Printa como float... No PDF é int, mas não sei se tem caso float de verdade, acho que sim
 
+    def print_ilimitada(self): #NÃO SEI SE ILIMITADA APARECE NO MEIO DO TABLEAU... ACHO QUE SIM, MAS NÃO ACHEI EXEMPLOS DE TESTE
+        print("ilimitada")
+        #Falta printar uma Sol Viavel o Certificado de Ilimitabilidade
     def print_tableau(self, tipo):
 
         if(tipo == "pl"):
@@ -150,7 +162,7 @@ class Simplex:
 
             tem_negativo_aux, j = self.tem_ci_negativo_aux()
             
-        #self.print_tableau("aux")
+        self.print_tableau("aux")
 
     def tem_ci_negativo(self): #ACHO QUE NAO PODIA DAR SO UMA PASSADA POIS PODE SURGIR NEGATIVOS ATRAS. Pensar em um caso que acontece isso
         for j in range (self.m_tb): #j é coluna
@@ -173,7 +185,8 @@ class Simplex:
         self.c_tb = np.concatenate((self.c_tb, c_ext_canonico))
 
         for i in range (self.m):
-            self.c_tb[i] *= -1
+            if(self.c_tb[i] != 0):
+                self.c_tb[i] *= -1
 
         self.A_tb = self.A
         identidade = np.eye(self.n)
@@ -196,50 +209,60 @@ class Simplex:
             razao = 2**10
             linha_pivo = 0
             coluna_pivo = 0
-                
+            
+            ilimitada = 0
+
             for i in range(self.n): #i é linha
                 if(self.A_tb[i][j] > 0.0 and self.b_tb[i]/self.A_tb[i][j] < razao):
                     linha_pivo = i
                     coluna_pivo = j
                     razao = self.b_tb[i]/self.A_tb[i][j]
-                
-            #Pivotear: Eliminacao Gaussiana de forma que apenas A[linha_pivo][coluna_pivo] seja 1 e o restante da coluna seja 0
-            pivo = self.A_tb[linha_pivo][coluna_pivo]
-            self.extensao_tb[linha_pivo] /= pivo #talvez nem precise disso pois não faz parte do exercício
-            self.A_tb[linha_pivo] /= pivo
-            self.b_tb[linha_pivo] /= pivo
-
-            #print("\n\nPIVOTEANDO")
-            #self.print_tableau()
-
-            valor_op = -1*self.c_tb[coluna_pivo]
-                
-            self.certificado_otimo_tb += valor_op*self.extensao_tb[linha_pivo][:]   
-            self.c_tb += valor_op*self.A_tb[linha_pivo][:]
-            self.val_obj_tb += valor_op*self.b_tb[linha_pivo]
-
-            #print("\n\nZERANDO PRIMEIRA LINHA")
-            #self.print_tableau()
-
-            for i in range(self.n):
-                if(i != linha_pivo):
-                    elemento = self.A_tb[i][coluna_pivo]
-
-                    if(np.sign(elemento) == 1 or np.sign(elemento) == -1):
-                        valor_op = -1*elemento
-                            
-                        self.extensao_tb[i][:] += valor_op*self.extensao_tb[linha_pivo][:] 
-                        self.A_tb[i][:] += valor_op*self.A_tb[linha_pivo][:]
-                        self.b_tb[i] += valor_op*self.b_tb[linha_pivo]
-
-                    else:
-                        continue
-
-            #print("\n\nZERANDO DEMAIS LINHAS")
-            #self.print_tableau()
-
-            tem_negativo, j = self.tem_ci_negativo()
+                elif(self.A_tb[i][j] < 0.0 or self.A_tb[i][j] == 0.0):
+                    ilimitada += 1
             
+            if(ilimitada == self.n):
+                self.print_ilimitada()
+                self.print_tableau("pl")
+                return
+            else:    
+                #Pivotear: Eliminacao Gaussiana de forma que apenas A[linha_pivo][coluna_pivo] seja 1 e o restante da coluna seja 0
+                pivo = self.A_tb[linha_pivo][coluna_pivo]
+                self.extensao_tb[linha_pivo] /= pivo #talvez nem precise disso pois não faz parte do exercício
+                self.A_tb[linha_pivo] /= pivo
+                self.b_tb[linha_pivo] /= pivo
+
+                #print("\n\nPIVOTEANDO")
+                #self.print_tableau()
+
+                valor_op = -1*self.c_tb[coluna_pivo]
+                    
+                self.certificado_otimo_tb += valor_op*self.extensao_tb[linha_pivo][:]   
+                self.c_tb += valor_op*self.A_tb[linha_pivo][:]
+                self.val_obj_tb += valor_op*self.b_tb[linha_pivo]
+
+                #print("\n\nZERANDO PRIMEIRA LINHA")
+                #self.print_tableau()
+
+                for i in range(self.n):
+                    if(i != linha_pivo):
+                        elemento = self.A_tb[i][coluna_pivo]
+
+                        if(np.sign(elemento) == 1 or np.sign(elemento) == -1):
+                            valor_op = -1*elemento
+                                
+                            self.extensao_tb[i][:] += valor_op*self.extensao_tb[linha_pivo][:] 
+                            self.A_tb[i][:] += valor_op*self.A_tb[linha_pivo][:]
+                            self.b_tb[i] += valor_op*self.b_tb[linha_pivo]
+
+                        else:
+                            continue
+
+                #print("\n\nZERANDO DEMAIS LINHAS")
+                #self.print_tableau()
+
+                tem_negativo, j = self.tem_ci_negativo()
+
+        self.print_otima()    
         self.print_tableau("pl")
     
 
