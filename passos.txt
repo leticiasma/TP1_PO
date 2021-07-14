@@ -1,0 +1,17 @@
+1 - Recebe a PL
+2 - Faz a PL auxiliar
+    2.1 - Completa com variáveis de folga  
+    2.2 - Zera o c e coloca "1" em cima da nova base
+    2.3 - Resolve essa PL enviando para o Tableaux
+3 - Se o valor ótimo for menor do que 0, então a PL é inviável e temos um certificado de inviabilidade
+    que é o certificado de ótima da PL auxiliar e paramos.
+4 - Se o valor ótimo for igual a 0, então vamos resolver a PL pois ela é viável
+5 - Completa com variáveis de folga
+6 - Envia para o Tableaux com o c invertido
+7 - Se houver b_i negativo, inverte o sinal da linha (?)
+8 - Verifica se existe c_i negativo. Se não houver nenhum elemento c_i negativo, chegamos no ótimo e paramos
+9 - Se houver, então escolhemos quem pivotear na coluna i
+10 - Se a coluna i for não positiva, a PL é ilimitada.
+    10.1 - Achamos uma solução viável e paramos
+11 - Pivoteamos algum elemento a_i_j para zerar a coluna i 
+12 - Voltamos para o passo 8
