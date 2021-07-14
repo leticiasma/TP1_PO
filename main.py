@@ -17,12 +17,12 @@ for i in range(n):
     b[i] = linha[-1]
 
 
-print("PL ORIGINAL:\n")
-print("n restricoes: {}".format(n))
-print("m variaveis: {}".format(m))
-print("vetor de custo c: {}".format(c))
-print("matriz A de restricoes: \n{}".format(A))
-print("vetor b: {}".format(b))
+#print("PL ORIGINAL:\n")
+#print("n restricoes: {}".format(n))
+#print("m variaveis: {}".format(m))
+#print("vetor de custo c: {}".format(c))
+#print("matriz A de restricoes: \n{}".format(A))
+#print("vetor b: {}".format(b))
 
 simplex = Simplex(n,m,c,A,b)
 

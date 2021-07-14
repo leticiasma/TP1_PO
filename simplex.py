@@ -105,6 +105,12 @@ class Simplex:
 
         #self.print_tableau(A)'''
 
+    def tem_ci_negativo(self): #ACHO QUE NAO PODIA DAR SO UMA PASSADA POIS PODE SURGIR NEGATIVOS ATRAS
+        for j in range (self.m_tb): #j é coluna
+            if(self.c_tb[j] < 0):
+                return True, j    
+        return False, -1
+
     def tableau(self):
 
         self.m_tb = (self.m)+self.n
@@ -126,95 +132,62 @@ class Simplex:
         self.extensao_tb = np.eye(self.n)
         self.val_obj_tb = 0
 
-        print("\n\nINICIAL")
-        self.print_tableau()
+        #print("\n\nINICIAL")
+        #self.print_tableau()
 
-        for j in range (self.m_tb): #j é coluna
-            if(self.c_tb[j] < 0):
-                #Achar a linha na coluna j com a menor razao b/A
-                razao = 2**10
-                linha_pivo = 0
-                coluna_pivo = 0
+        #PENSAR NAQUELES CASOS DE DESEMPATE
+        tem_negativo, j = self.tem_ci_negativo()
+
+        while(tem_negativo):
+            #Achar a linha na coluna j com a menor razao b/A
+            razao = 2**10
+            linha_pivo = 0
+            coluna_pivo = 0
                 
-                for i in range(self.n): #i é linha
-                    if(self.A_tb[i][j] > 0.0 and self.b_tb[i]/self.A_tb[i][j] < razao):
-                        linha_pivo = i
-                        coluna_pivo = j
-                        razao = self.b_tb[i]/self.A_tb[i][j]
+            for i in range(self.n): #i é linha
+                if(self.A_tb[i][j] > 0.0 and self.b_tb[i]/self.A_tb[i][j] < razao):
+                    linha_pivo = i
+                    coluna_pivo = j
+                    razao = self.b_tb[i]/self.A_tb[i][j]
                 
-                #Pivotear: Eliminacao Gaussiana de forma que apenas A[linha_pivo][coluna_pivo] seja 1 e o restante da coluna seja 0
-                pivo = self.A_tb[linha_pivo][coluna_pivo]
-                self.extensao_tb[linha_pivo] /= pivo #talvez nem precise disso pois não faz parte do exercício
-                self.A_tb[linha_pivo] /= pivo
-                self.b_tb[linha_pivo] /= pivo
+            #Pivotear: Eliminacao Gaussiana de forma que apenas A[linha_pivo][coluna_pivo] seja 1 e o restante da coluna seja 0
+            pivo = self.A_tb[linha_pivo][coluna_pivo]
+            self.extensao_tb[linha_pivo] /= pivo #talvez nem precise disso pois não faz parte do exercício
+            self.A_tb[linha_pivo] /= pivo
+            self.b_tb[linha_pivo] /= pivo
 
-                print("\n\nPIVOTEANDO")
-                self.print_tableau()
+            #print("\n\nPIVOTEANDO")
+            #self.print_tableau()
 
-                valor_op = -1*self.c_tb[coluna_pivo]
+            valor_op = -1*self.c_tb[coluna_pivo]
                 
-                self.certificado_otimo_tb += valor_op*self.extensao_tb[linha_pivo][:]   
-                self.c_tb += valor_op*self.A_tb[linha_pivo][:]
-                self.val_obj_tb += valor_op*self.b_tb[linha_pivo]
+            self.certificado_otimo_tb += valor_op*self.extensao_tb[linha_pivo][:]   
+            self.c_tb += valor_op*self.A_tb[linha_pivo][:]
+            self.val_obj_tb += valor_op*self.b_tb[linha_pivo]
 
-                print("\n\nZERANDO PRIMEIRA LINHA")
-                self.print_tableau()
+            #print("\n\nZERANDO PRIMEIRA LINHA")
+            #self.print_tableau()
 
-                for i in range(self.n):
-                    if(i != linha_pivo):
-                        elemento = self.A_tb[i][coluna_pivo]
+            for i in range(self.n):
+                if(i != linha_pivo):
+                    elemento = self.A_tb[i][coluna_pivo]
 
-                        if(np.sign(elemento) == 1 or np.sign(elemento) == -1):
-                            valor_op = -1*elemento
+                    if(np.sign(elemento) == 1 or np.sign(elemento) == -1):
+                        valor_op = -1*elemento
                             
-                            self.extensao_tb[i][:] += valor_op*self.extensao_tb[linha_pivo][:] 
-                            self.A_tb[i][:] += valor_op*self.A_tb[linha_pivo][:]
-                            self.b_tb[i] += valor_op*self.b_tb[linha_pivo]
+                        self.extensao_tb[i][:] += valor_op*self.extensao_tb[linha_pivo][:] 
+                        self.A_tb[i][:] += valor_op*self.A_tb[linha_pivo][:]
+                        self.b_tb[i] += valor_op*self.b_tb[linha_pivo]
 
-                        else:
-                            continue
+                    else:
+                        continue
 
-                print("\n\nZERANDO DEMAIS LINHAS")
-                self.print_tableau()
+            #print("\n\nZERANDO DEMAIS LINHAS")
+            #self.print_tableau()
 
-                #for i in range (self.n):
-
-                #if(np.sign(pivo) == -1):
-                #    self.A_tb[linha_pivo] /= -1*pivo
-                #else:
-                     
-                #print("O pivo eh "+str(self.A_tb[linha_pivo][coluna_pivo]))
-                
-
-        '''for i in range(m):
-            if(c[i] < 0):
-
-                print("\nc negativo igual a "+str(c[i])+" na posicao "+str(i))
-
-                linha_pivo = 0
-                coluna_pivo = 0
-                pivo = A[0][0]
-
-                for j in range(self.n):
-
-                    print("\nAnalisando se A["+str(j)+"]["+str(i)+"] = "+str(A[j][i])+" é diferente de zero\ne se b["+str(j)+"]/A["+str(j)+"]["+str(i)+"]="+str(self.b[j])+"/"+str(A[j][i])+" < A["+str(linha_pivo)+"]["+str(coluna_pivo)+"] = "+str(A[linha_pivo][coluna_pivo])+"\n")
-
-                    if ((A[j][i] != 0.0) and (self.b[j]/A[j][i] < A[linha_pivo][coluna_pivo])):
-                        print("Entrou no if!")
-                        linha_pivo = j
-                        coluna_pivo = i
-                        pivo = A[j][i]
-                
-                print("\nO pivo eh: "+str(pivo)+" da linha "+str(linha_pivo)+" e coluna "+str(coluna_pivo))
-                if(np.sign(pivo) == -1):
-                    A[linha_pivo] /= -1*pivo
-                else:
-                    A[linha_pivo] /= pivo 
-
-                self.print_tableau(A)
-
-        #self.print_tableau(A)'''
-
+            tem_negativo, j = self.tem_ci_negativo()
+            
+        self.print_tableau()
     
 
 
