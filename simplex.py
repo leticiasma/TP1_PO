@@ -12,7 +12,7 @@ class Simplex:
 
     def print_tableau(self, tipo): #melhorar duplicacao
 
-        if(tipo == "pl"):
+        if(tipo == "original"):
             print(self.certificado_otimo_tb,"|",self.c_tb,"|",self.val_obj_tb)
             for i in range (self.n):
                 print(self.extensao_tb[i],"|",self.A_tb[i],"|",self.b_tb[i])
@@ -41,7 +41,13 @@ class Simplex:
 
     def print_ilimitada(self): #NÃO SEI SE ILIMITADA APARECE NO MEIO DO TABLEAU... ACHO QUE SIM, MAS NÃO ACHEI EXEMPLOS DE TESTE
         print("ilimitada")
-        #Falta printar uma Sol Viavel o Certificado de Ilimitabilidade
+        #Falta printar uma Sol Viavel
+        certificado = ""
+        certificado += str(-1*self.c_tb[self.certificado_ilimitada])+" "
+
+        for i in range(self.n):
+            certificado += str(-1*self.A_tb[i][self.certificado_ilimitada])+" "
+        print(certificado)
 
     def resolve_PL(self):
         viavel = self.testa_viabilidade()
@@ -49,7 +55,9 @@ class Simplex:
         if(viavel):
             #print("otima ou ilimitada")
             self.monta_tableau_PL()
-            self.tableau("original", self.c_tb, self.A_tb, self.b_tb, self.extensao_tb, self.certificado_otimo_tb, self.val_obj_tb)
+
+            print("RESOLVENDO TB ORIGINAL")
+            self.tableau("original", self.c_tb, self.A_tb, self.b_tb, self.extensao_tb, self.certificado_otimo_tb)#, self.val_obj_tb)
         else:
             self.print_inviavel()
 
@@ -59,7 +67,8 @@ class Simplex:
         self.monta_tableau_PL_aux()
 
         #Resolve a PL Auxiliar
-        self.tableau("aux", self.c_aux, self.A_aux, self.b_aux, self.extensao_aux, self.certificado_otimo_aux, self.val_obj_aux)
+        print("RESOLVENDO TB AUX")
+        self.tableau("aux", self.c_aux, self.A_aux, self.b_aux, self.extensao_aux, self.certificado_otimo_aux)#, self.val_obj_aux)
 
         if(self.val_obj_aux < 0):  
             return False
@@ -86,7 +95,7 @@ class Simplex:
 
         self.b_aux = self.b
 
-        #self.print_tableau("aux")
+        self.print_tableau("aux")
 
         #FAZER O CASO DE ALGUM B SER NEGATIVO E JÁ REGISTRANDO A OP NO TABLEAU NA EXTENSAO
         for i in range(self.n):
@@ -94,9 +103,9 @@ class Simplex:
             self.c_aux -= self.A_aux[i][:]
             self.val_obj_aux -= self.b_aux[i]
         
-         #self.print_tableau("aux")
+        self.print_tableau("aux")
 
-    def monta_tableau_PL():
+    def monta_tableau_PL(self):
         self.m_tb = (self.m)+self.n
 
         c_ext_canonico = np.zeros(self.n)
@@ -118,7 +127,7 @@ class Simplex:
         self.val_obj_tb = 0
 
         #print("\n\nINICIAL")
-        #self.print_tableau()
+        #self.print_tableau("original")
     
     def tem_ci_negativo(self, c): #ACHO QUE NAO PODIA DAR SO UMA PASSADA POIS PODE SURGIR NEGATIVOS ATRAS. Pensar em um caso que acontece isso
         for j in range ((self.m)+self.n): #j é coluna
@@ -126,7 +135,7 @@ class Simplex:
                 return True, j    
         return False, -1
 
-    def tableau(self, tipo, c, A, b, extensao, certificado_otimo, val_obj): #n e b não mudam para PL original e auxiliar
+    def tableau(self, tipo, c, A, b, extensao, certificado_otimo): #val_obj): #n e b não mudam para PL original e auxiliar
 
         #PENSAR NAQUELES CASOS DE DESEMPATE
         tem_negativo, j = self.tem_ci_negativo(c)
@@ -148,8 +157,10 @@ class Simplex:
                     ilimitada += 1
 
             if(ilimitada == self.n):
+                self.certificado_ilimitada = j
+                self.print_tableau(tipo)
                 self.print_ilimitada()
-                self.print_tableau("pl")
+            
                 return
             else:    
                 #Pivotear: Eliminacao Gaussiana de forma que apenas A[linha_pivo][coluna_pivo] seja 1 e o restante da coluna seja 0
@@ -158,17 +169,22 @@ class Simplex:
                 A[linha_pivo] /= pivo
                 b[linha_pivo] /= pivo
 
-                #print("\n\nPIVOTEANDO")
-                #self.print_tableau()
+                print("\n\nPIVOTEANDO")
+                self.print_tableau(tipo)
 
                 valor_op = -1*c[coluna_pivo]
                     
                 certificado_otimo += valor_op*extensao[linha_pivo][:]   
                 c += valor_op*A[linha_pivo][:]
-                val_obj += valor_op*b[linha_pivo]
+                if(tipo == "aux"):
+                    self.val_obj_aux += valor_op*b[linha_pivo]
+                else:
+                    print("a somar :",valor_op*b[linha_pivo])
+                    print("val obj :",self.val_obj_tb)
+                    self.val_obj_tb += valor_op*b[linha_pivo]
 
-                #print("\n\nZERANDO PRIMEIRA LINHA")
-                #self.print_tableau()
+                print("\n\nZERANDO PRIMEIRA LINHA")
+                self.print_tableau(tipo)
 
                 for i in range(self.n):
                     if(i != linha_pivo):
@@ -183,11 +199,14 @@ class Simplex:
                         else:
                             continue
 
-                #print("\n\nZERANDO DEMAIS LINHAS")
-                #self.print_tableau()
+                print("\n\nZERANDO DEMAIS LINHAS")
+                self.print_tableau(tipo)
 
                 tem_negativo, j = self.tem_ci_negativo(c)
         
+        print("CONFIGURACAO FINAL")
+        self.print_tableau(tipo)
+
         if(tipo == "original"):
             self.print_otima()
     
