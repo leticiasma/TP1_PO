@@ -12,25 +12,52 @@ class Simplex:
 
     def print_tableau(self, tipo): #melhorar duplicacao
 
-        if(tipo == "original"):
-            print(self.certificado_otimo_original,"|",self.c_PL,"|",self.val_obj_original)
+        if(tipo == "simples"):
+            print(self.certif_otimalidade_PL,"|",self.c_PL,"|",self.val_obj_PL)
             for i in range (self.n):
-                print(self.extensao_aux[i],"|",self.A_aux[i],"|",self.b_aux[i])
+                print(self.matriz_transform[i],"|",self.A_tableau[i],"|",self.b_tableau[i])
             print("\n\n")
-        elif(tipo == "aux"):
-            print(self.certificado_otimo_original,"|",self.c_original_ext,"|",self.val_obj_original)
+        elif(tipo == "extendido"):
+            print(self.certif_otimalidade_PL,"|",self.c_original_ext,"|",self.val_obj_PL)
             print(self.certificado_otimo_aux,"|",self.c_aux,"|",self.val_obj_aux)
             for i in range (self.n):
-                print(self.extensao_aux[i],"|",self.A_aux[i],"|",self.b_aux[i])
+                print(self.matriz_transform[i],"|",self.A_tableau[i],"|",self.b_tableau[i])
             print("\n\n")
+    def print_base_sol_otima(self): #nao sei se funciona para o caso de multiplas bases, mais de uma sol otima
+        base = ""
+        for i in range(self.m):
+            if (self.c_PL[i] == 0):
+                achou_um = False
+                for j in range(self.n):
+                    if(self.A_tableau[j][i] == 1):
+                        achou_um = True
+                        if(i != self.m-1):
+                            base += str(self.b_tableau[j])+" "
+                        else:
+                            base += str(self.b_tableau[j])
+                
+                if(not achou_um):
+                    if(i != self.m-1):
+                        base += "0 " 
+                    else:
+                        base += "0"                   
+            else:
+                if(i != self.m-1):
+                    base += "0 " 
+                else:
+                    base += "0"
+        
+        print(base)
 
     def print_otima(self):
         print("otima")
-        print(str(self.val_obj_tb))
+        print(str(self.val_obj_PL))
+
+        self.print_base_sol_otima()
         #Faltou printar uma solução que atinge o valor ótimo
         certificado = ""
         for i in range(self.n):
-            certificado += str(self.certificado_otimo_tb[i])+" "
+            certificado += str(self.certif_otimalidade_PL[i])+" "
         print(certificado)
 
     def print_inviavel(self):
@@ -44,10 +71,10 @@ class Simplex:
         print("ilimitada")
         #Falta printar uma Sol Viavel
         certificado = ""
-        certificado += str(-1*self.c_tb[self.certificado_ilimitada])+" "
+        certificado += str(-1*self.c_PL[self.certificado_ilimitada])+" "
 
         for i in range(self.n):
-            certificado += str(-1*self.A_tb[i][self.certificado_ilimitada])+" "
+            certificado += str(-1*self.A_tableau[i][self.certificado_ilimitada])+" "
         print(certificado)
 
     def resolve_PL(self):
@@ -70,7 +97,7 @@ class Simplex:
 
         #Resolve a PL Auxiliar
         print("RESOLVENDO TB AUX")
-        self.tableau()#"aux", self.c_aux, self.A_aux, self.b_aux, self.extensao_aux, self.certificado_otimo_aux)#, self.val_obj_aux)
+        self.tableau()#"aux", self.c_aux, self.A_tableau, self.b_tableau, self.matriz_transform, self.certificado_otimo_aux)#, self.val_obj_aux)
 
         if(self.val_obj_aux < 0):  
             return False
@@ -82,28 +109,32 @@ class Simplex:
 
         self.m_aux = (self.m)+2*self.n
         
-        self.A_aux = self.A
-        self.b_aux = self.b
+        self.A_tableau = self.A
+        self.b_tableau = self.b
 
         identidade = np.eye(self.n)
-        self.A_aux = np.concatenate((self.A_aux, identidade), axis=1)
+        self.A_tableau = np.concatenate((self.A_tableau, identidade), axis=1)
+
+        self.matriz_transform = np.eye(self.n) #transformacao
 
         for i in range(self.n):
-            if(self.b_aux[i]<0):
-                self.b_aux[i] *= -1
+            if(self.b_tableau[i]<0):
+                self.b_tableau[i] *= -1
             
-                for j in range(self.m_aux-self.n):
-                    if(self.A_aux[i][j] != 0):
-                        self.A_aux[i][j] *= -1
+                #for j in range(self.m_aux-self.n):
+                    #if(self.A_tableau[i] != 0):
+                self.A_tableau[i] *= -1
+                self.matriz_transform[i] *= -1                 
+                    
 
         identidade = np.eye(self.n)
-        self.A_aux = np.concatenate((self.A_aux, identidade), axis=1)
+        self.A_tableau = np.concatenate((self.A_tableau, identidade), axis=1)
         
         #self.m_aux = (self.m)+2*self.n
 
         #self.certificado_otimo_aux = np.zeros(self.n)
         self.certificado_otimo_aux = np.zeros(self.n)
-        self.certificado_otimo_original = np.zeros(self.n)
+        self.certif_otimalidade_PL = np.zeros(self.n)
 
         #self.c_aux = np.ones(self.m_aux)
         #for i in range(self.m):
@@ -124,32 +155,31 @@ class Simplex:
 
         #self.val_obj_aux = 0
         self.val_obj_aux = 0
-        self.val_obj_original = 0
+        self.val_obj_PL = 0
 
-        #self.extensao_aux = np.eye(self.n)
-        self.extensao_aux = np.eye(self.n)
+        #self.matriz_transform = np.eye(self.n)
 
-        #self.A_aux = self.A
+        #self.A_tableau = self.A
         #identidade = np.eye(self.n)
-        #self.A_aux = np.concatenate((self.A_aux, identidade), axis=1)
+        #self.A_tableau = np.concatenate((self.A_tableau, identidade), axis=1)
 
-        #self.b_aux = self.b
+        #self.b_tableau = self.b
 
-        #print(str(self.certificado_otimo_original)+" | "+str(self.c_original_ext)+" | "+str(self.val_obj_original))
+        #print(str(self.certif_otimalidade_PL)+" | "+str(self.c_original_ext)+" | "+str(self.val_obj_PL))
         self.print_tableau("aux")
 
         #FAZER O CASO DE ALGUM B SER NEGATIVO E JÁ REGISTRANDO A OP NO TABLEAU NA EXTENSAO
         #for i in range(self.n):
-        #    self.certificado_otimo_aux -= self.extensao_aux[i]
-        #    self.c_aux -= self.A_aux[i][:]
-        #    self.val_obj_aux -= self.b_aux[i]
+        #    self.certificado_otimo_aux -= self.matriz_transform[i]
+        #    self.c_aux -= self.A_tableau[i][:]
+        #    self.val_obj_aux -= self.b_tableau[i]
 
         for i in range(self.n):
-            self.certificado_otimo_aux -= self.extensao_aux[i]
-            self.c_aux -= self.A_aux[i][:]
-            self.val_obj_aux -= self.b_aux[i]
+            self.certificado_otimo_aux -= self.matriz_transform[i]
+            self.c_aux -= self.A_tableau[i][:]
+            self.val_obj_aux -= self.b_tableau[i]
 
-        #print(str(self.certificado_otimo_original)+" | "+str(self.c_original_ext)+" | "+str(self.val_obj_original))
+        #print(str(self.certif_otimalidade_PL)+" | "+str(self.c_original_ext)+" | "+str(self.val_obj_PL))
         self.print_tableau("aux")
 
     def continua_tableau_PL(self):
@@ -161,7 +191,7 @@ class Simplex:
         #intervalo = 
 
         self.c_PL = np.delete(self.c_original_ext, np.s_[(len(self.c_original_ext)-self.n):], 0)
-        self.A_aux = np.delete(self.A_aux, np.s_[(len(self.c_original_ext)-self.n):], 1)
+        self.A_tableau = np.delete(self.A_tableau, np.s_[(len(self.c_original_ext)-self.n):], 1)
 
         #PENSAR NAQUELES CASOS DE DESEMPATE
         tem_negativo, j = self.tem_ci_negativo(self.c_PL)
@@ -172,41 +202,38 @@ class Simplex:
             linha_pivo = 0
             coluna_pivo = 0
             
-            #ilimitada = 0
+            ilimitada = 0
 
             for i in range(self.n): #i é linha
-                if(self.A_aux[i][j] > 0.0 and self.b_aux[i]/self.A_aux[i][j] < razao):
+                if(self.A_tableau[i][j] > 0.0 and self.b_tableau[i]/self.A_tableau[i][j] < razao):
                     linha_pivo = i
                     coluna_pivo = j
-                    razao = self.b_aux[i]/self.A_aux[i][j]
-                elif(self.A_aux[i][j] < 0.0 or self.A_aux[i][j] == 0.0):
-                    #ilimitada += 1
-                    pass
+                    razao = self.b_tableau[i]/self.A_tableau[i][j]
+                elif(self.A_tableau[i][j] < 0.0 or self.A_tableau[i][j] == 0.0):
+                    ilimitada += 1
 
-            #if(ilimitada == self.n):
-            if(False):
-                pass
-                #self.certificado_ilimitada = j
+            if(ilimitada == self.n):
+                self.certificado_ilimitada = j
                 #self.print_tableau(tipo)
-                #self.print_ilimitada()
+                self.print_ilimitada()
             
-                #return
+                return
             else:    
                 #Pivotear: Eliminacao Gaussiana de forma que apenas A[linha_pivo][coluna_pivo] seja 1 e o restante da coluna seja 0
-                pivo = self.A_aux[linha_pivo][coluna_pivo]
-                self.extensao_aux[linha_pivo] /= pivo #talvez nem precise disso pois não faz parte do exercício
-                self.A_aux[linha_pivo] /= pivo
-                self.b_aux[linha_pivo] /= pivo
+                pivo = self.A_tableau[linha_pivo][coluna_pivo]
+                self.matriz_transform[linha_pivo] /= pivo #talvez nem precise disso pois não faz parte do exercício
+                self.A_tableau[linha_pivo] /= pivo
+                self.b_tableau[linha_pivo] /= pivo
 
                 print("\n\nPIVOTEANDO")
                 self.print_tableau("aux")
 
                 valor_op = -1*self.c_PL[coluna_pivo]
                     
-                self.certificado_otimo_original += valor_op*self.extensao_aux[linha_pivo][:]   
-                self.c_PL += valor_op*self.A_aux[linha_pivo][:]
+                self.certif_otimalidade_PL += valor_op*self.matriz_transform[linha_pivo][:]   
+                self.c_PL += valor_op*self.A_tableau[linha_pivo][:]
                 #if(tipo == "aux"):
-                self.val_obj_original += valor_op*self.b_aux[linha_pivo]
+                self.val_obj_PL += valor_op*self.b_tableau[linha_pivo]
                 #else:
                     #print("a somar :",valor_op*b[linha_pivo])
                     #print("val obj :",self.val_obj_tb)
@@ -217,14 +244,14 @@ class Simplex:
 
                 for i in range(self.n):
                     if(i != linha_pivo):
-                        elemento = self.A_aux[i][coluna_pivo]
+                        elemento = self.A_tableau[i][coluna_pivo]
 
                         if(np.sign(elemento) == 1 or np.sign(elemento) == -1):
                             valor_op = -1*elemento
                                 
-                            self.extensao_aux[i][:] += valor_op*self.extensao_aux[linha_pivo][:] 
-                            self.A_aux[i][:] += valor_op*self.A_aux[linha_pivo][:]
-                            self.b_aux[i] += valor_op*self.b_aux[linha_pivo]
+                            self.matriz_transform[i][:] += valor_op*self.matriz_transform[linha_pivo][:] 
+                            self.A_tableau[i][:] += valor_op*self.A_tableau[linha_pivo][:]
+                            self.b_tableau[i] += valor_op*self.b_tableau[linha_pivo]
                         else:
                             continue
 
@@ -237,7 +264,7 @@ class Simplex:
         self.print_tableau("original")
         
         #if(tipo == "original"):
-            #self.print_otima()
+        self.print_otima()
 
 
         #self.c_PL = self.c_original_ext
@@ -264,11 +291,11 @@ class Simplex:
             #ilimitada = 0
 
             for i in range(self.n): #i é linha
-                if(self.A_aux[i][j] > 0.0 and self.b_aux[i]/self.A_aux[i][j] < razao):
+                if(self.A_tableau[i][j] > 0.0 and self.b_tableau[i]/self.A_tableau[i][j] < razao):
                     linha_pivo = i
                     coluna_pivo = j
-                    razao = self.b_aux[i]/self.A_aux[i][j]
-                elif(self.A_aux[i][j] < 0.0 or self.A_aux[i][j] == 0.0):
+                    razao = self.b_tableau[i]/self.A_tableau[i][j]
+                elif(self.A_tableau[i][j] < 0.0 or self.A_tableau[i][j] == 0.0):
                     #ilimitada += 1
                     pass
 
@@ -282,10 +309,10 @@ class Simplex:
                 #return
             else:    
                 #Pivotear: Eliminacao Gaussiana de forma que apenas A[linha_pivo][coluna_pivo] seja 1 e o restante da coluna seja 0
-                pivo = self.A_aux[linha_pivo][coluna_pivo]
-                self.extensao_aux[linha_pivo] /= pivo #talvez nem precise disso pois não faz parte do exercício
-                self.A_aux[linha_pivo] /= pivo
-                self.b_aux[linha_pivo] /= pivo
+                pivo = self.A_tableau[linha_pivo][coluna_pivo]
+                self.matriz_transform[linha_pivo] /= pivo #talvez nem precise disso pois não faz parte do exercício
+                self.A_tableau[linha_pivo] /= pivo
+                self.b_tableau[linha_pivo] /= pivo
 
                 print("\n\nPIVOTEANDO")
                 self.print_tableau("aux")
@@ -293,13 +320,13 @@ class Simplex:
                 valor_op = -1*self.c_aux[coluna_pivo]
                 valor_op_ext = -1*self.c_original_ext[coluna_pivo]
                     
-                self.certificado_otimo_aux += valor_op*self.extensao_aux[linha_pivo][:]
-                self.certificado_otimo_original += valor_op_ext*self.extensao_aux[linha_pivo][:]   
-                self.c_aux += valor_op*self.A_aux[linha_pivo][:]
-                self.c_original_ext += valor_op_ext*self.A_aux[linha_pivo][:]
+                self.certificado_otimo_aux += valor_op*self.matriz_transform[linha_pivo][:]
+                self.certif_otimalidade_PL += valor_op_ext*self.matriz_transform[linha_pivo][:]   
+                self.c_aux += valor_op*self.A_tableau[linha_pivo][:]
+                self.c_original_ext += valor_op_ext*self.A_tableau[linha_pivo][:]
                 #if(tipo == "aux"):
-                self.val_obj_aux += valor_op*self.b_aux[linha_pivo]
-                self.val_obj_original += valor_op_ext*self.b_aux[linha_pivo]
+                self.val_obj_aux += valor_op*self.b_tableau[linha_pivo]
+                self.val_obj_PL += valor_op_ext*self.b_tableau[linha_pivo]
                 #else:
                     #print("a somar :",valor_op*b[linha_pivo])
                     #print("val obj :",self.val_obj_tb)
@@ -310,14 +337,14 @@ class Simplex:
 
                 for i in range(self.n):
                     if(i != linha_pivo):
-                        elemento = self.A_aux[i][coluna_pivo]
+                        elemento = self.A_tableau[i][coluna_pivo]
 
                         if(np.sign(elemento) == 1 or np.sign(elemento) == -1):
                             valor_op = -1*elemento
                                 
-                            self.extensao_aux[i][:] += valor_op*self.extensao_aux[linha_pivo][:] 
-                            self.A_aux[i][:] += valor_op*self.A_aux[linha_pivo][:]
-                            self.b_aux[i] += valor_op*self.b_aux[linha_pivo]
+                            self.matriz_transform[i][:] += valor_op*self.matriz_transform[linha_pivo][:] 
+                            self.A_tableau[i][:] += valor_op*self.A_tableau[linha_pivo][:]
+                            self.b_tableau[i] += valor_op*self.b_tableau[linha_pivo]
                         else:
                             continue
 
