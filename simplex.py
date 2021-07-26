@@ -52,7 +52,7 @@ class Simplex:
     def resolve_PL(self):
         viavel = self.testa_viabilidade()
 
-        if(viavel):
+        if(viavel): #pensar no caso com mais de uma sol otima, que ficava 0 em cima de algo que não era base
             #print("otima ou ilimitada")
             self.monta_tableau_PL()
 
@@ -76,33 +76,74 @@ class Simplex:
         else:
             return True
 
-    def monta_tableau_PL_aux(self):
-        self.m_aux = (self.m)+self.n
+    def monta_tableau_PL_aux(self): #tem que adicionar também variáveis artificiais além das de folga
 
-        self.certificado_otimo_aux = np.zeros(self.n)
-
-        self.c_aux = np.ones(self.m_aux)
-        for i in range(self.m):
-            self.c_aux[i] = 0
-
-        self.val_obj_aux = 0
-
-        self.extensao_aux = np.eye(self.n)
-
+        self.m_aux = (self.m)+2*self.n
+        
         self.A_aux = self.A
+        self.b_aux = self.b
+
         identidade = np.eye(self.n)
         self.A_aux = np.concatenate((self.A_aux, identidade), axis=1)
 
-        self.b_aux = self.b
+        for i in range(self.n):
+            if(self.b_aux[i]<0):
+                self.b_aux[i] *= -1
+            
+                for j in range(self.m_aux-self.n):
+                    if(self.A_aux[i][j] != 0):
+                        self.A_aux[i][j] *= -1
 
+        identidade = np.eye(self.n)
+        self.A_aux = np.concatenate((self.A_aux, identidade), axis=1)
+        
+        #self.m_aux = (self.m)+2*self.n
+
+        #self.certificado_otimo_aux = np.zeros(self.n)
+        self.certificado_otimo_aux = np.zeros(self.n)
+        self.certificado_otimo_original = np.zeros(self.n)
+
+        #self.c_aux = np.ones(self.m_aux)
+        #for i in range(self.m):
+        #    self.c_aux[i] = 0
+
+        self.c_aux = np.ones(self.m_aux)
+        for i in range(self.m+self.n):
+            self.c_aux[i] = 0
+
+        self.c_original_ext = self.c
+        zeros = np.zeros(2*self.n)
+        
+        self.c_original_ext = np.concatenate((self.c_original_ext, zeros), axis=0)
+
+        #self.val_obj_aux = 0
+        self.val_obj_aux = 0
+        self.val_obj_original = 0
+
+        #self.extensao_aux = np.eye(self.n)
+        self.extensao_aux = np.eye(self.n)
+
+        #self.A_aux = self.A
+        #identidade = np.eye(self.n)
+        #self.A_aux = np.concatenate((self.A_aux, identidade), axis=1)
+
+        #self.b_aux = self.b
+
+        print(str(self.certificado_otimo_original)+" | "+str(self.c_original_ext)+" | "+str(self.val_obj_original))
         self.print_tableau("aux")
 
         #FAZER O CASO DE ALGUM B SER NEGATIVO E JÁ REGISTRANDO A OP NO TABLEAU NA EXTENSAO
+        #for i in range(self.n):
+        #    self.certificado_otimo_aux -= self.extensao_aux[i]
+        #    self.c_aux -= self.A_aux[i][:]
+        #    self.val_obj_aux -= self.b_aux[i]
+
         for i in range(self.n):
             self.certificado_otimo_aux -= self.extensao_aux[i]
             self.c_aux -= self.A_aux[i][:]
             self.val_obj_aux -= self.b_aux[i]
-        
+
+        print(str(self.certificado_otimo_original)+" | "+str(self.c_original_ext)+" | "+str(self.val_obj_original))
         self.print_tableau("aux")
 
     def monta_tableau_PL(self):
