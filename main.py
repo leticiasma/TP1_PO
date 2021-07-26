@@ -1,6 +1,11 @@
 import numpy as np
 from simplex import Simplex
 
+#precisao
+#leitura com arquivo ou escrito
+#correcao do output automatica ou manual
+
+
 entrada = open('standard_input.txt', 'r')
 
 n,m = entrada.readline().split() #n restricoes ; m variaveis
