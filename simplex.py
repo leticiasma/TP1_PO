@@ -13,11 +13,12 @@ class Simplex:
     def print_tableau(self, tipo): #melhorar duplicacao
 
         if(tipo == "original"):
-            print(self.certificado_otimo_tb,"|",self.c_tb,"|",self.val_obj_tb)
+            print(self.certificado_otimo_original,"|",self.c_PL,"|",self.val_obj_original)
             for i in range (self.n):
-                print(self.extensao_tb[i],"|",self.A_tb[i],"|",self.b_tb[i])
+                print(self.extensao_aux[i],"|",self.A_aux[i],"|",self.b_aux[i])
             print("\n\n")
         elif(tipo == "aux"):
+            print(self.certificado_otimo_original,"|",self.c_original_ext,"|",self.val_obj_original)
             print(self.certificado_otimo_aux,"|",self.c_aux,"|",self.val_obj_aux)
             for i in range (self.n):
                 print(self.extensao_aux[i],"|",self.A_aux[i],"|",self.b_aux[i])
@@ -54,10 +55,11 @@ class Simplex:
 
         if(viavel): #pensar no caso com mais de uma sol otima, que ficava 0 em cima de algo que não era base
             #print("otima ou ilimitada")
-            self.monta_tableau_PL()
+            print("RESOLVENDO TB ORIGINAL REAPROVEITANDO")
+            self.continua_tableau_PL()
 
-            print("RESOLVENDO TB ORIGINAL")
-            self.tableau("original", self.c_tb, self.A_tb, self.b_tb, self.extensao_tb, self.certificado_otimo_tb)#, self.val_obj_tb)
+            
+            #self.tableau()#"original", self.c_tb, self.A_tb, self.b_tb, self.extensao_tb, self.certificado_otimo_tb)#, self.val_obj_tb)
         else:
             self.print_inviavel()
 
@@ -68,7 +70,7 @@ class Simplex:
 
         #Resolve a PL Auxiliar
         print("RESOLVENDO TB AUX")
-        self.tableau("aux", self.c_aux, self.A_aux, self.b_aux, self.extensao_aux, self.certificado_otimo_aux)#, self.val_obj_aux)
+        self.tableau()#"aux", self.c_aux, self.A_aux, self.b_aux, self.extensao_aux, self.certificado_otimo_aux)#, self.val_obj_aux)
 
         if(self.val_obj_aux < 0):  
             return False
@@ -116,6 +118,10 @@ class Simplex:
         
         self.c_original_ext = np.concatenate((self.c_original_ext, zeros), axis=0)
 
+        for i in range(self.m_aux):
+            if(self.c_original_ext[i]!=0):
+                self.c_original_ext[i] *= -1
+
         #self.val_obj_aux = 0
         self.val_obj_aux = 0
         self.val_obj_original = 0
@@ -129,7 +135,7 @@ class Simplex:
 
         #self.b_aux = self.b
 
-        print(str(self.certificado_otimo_original)+" | "+str(self.c_original_ext)+" | "+str(self.val_obj_original))
+        #print(str(self.certificado_otimo_original)+" | "+str(self.c_original_ext)+" | "+str(self.val_obj_original))
         self.print_tableau("aux")
 
         #FAZER O CASO DE ALGUM B SER NEGATIVO E JÁ REGISTRANDO A OP NO TABLEAU NA EXTENSAO
@@ -143,43 +149,22 @@ class Simplex:
             self.c_aux -= self.A_aux[i][:]
             self.val_obj_aux -= self.b_aux[i]
 
-        print(str(self.certificado_otimo_original)+" | "+str(self.c_original_ext)+" | "+str(self.val_obj_original))
+        #print(str(self.certificado_otimo_original)+" | "+str(self.c_original_ext)+" | "+str(self.val_obj_original))
         self.print_tableau("aux")
 
-    def monta_tableau_PL(self):
-        self.m_tb = (self.m)+self.n
+    def continua_tableau_PL(self):
 
-        c_ext_canonico = np.zeros(self.n)
-        self.c_tb = self.c
-        self.c_tb = np.concatenate((self.c_tb, c_ext_canonico))
+        #elf.m_tb = (self.m)+self.n
+        #self.c_tb = self.c
+        
+        #cuidado se n está deletando de verdade
+        #intervalo = 
 
-        for i in range (self.m):
-            if(self.c_tb[i] != 0):
-                self.c_tb[i] *= -1
-
-        self.A_tb = self.A
-        identidade = np.eye(self.n)
-        self.A_tb = np.concatenate((self.A_tb, identidade), axis=1)
-
-        self.b_tb = self.b
-
-        self.certificado_otimo_tb = np.zeros(self.n)
-        self.extensao_tb = np.eye(self.n)
-        self.val_obj_tb = 0
-
-        #print("\n\nINICIAL")
-        #self.print_tableau("original")
-    
-    def tem_ci_negativo(self, c): #ACHO QUE NAO PODIA DAR SO UMA PASSADA POIS PODE SURGIR NEGATIVOS ATRAS. Pensar em um caso que acontece isso
-        for j in range ((self.m)+self.n): #j é coluna
-            if(c[j] < 0):
-                return True, j    
-        return False, -1
-
-    def tableau(self, tipo, c, A, b, extensao, certificado_otimo): #val_obj): #n e b não mudam para PL original e auxiliar
+        self.c_PL = np.delete(self.c_original_ext, np.s_[(len(self.c_original_ext)-self.n):], 0)
+        self.A_aux = np.delete(self.A_aux, np.s_[(len(self.c_original_ext)-self.n):], 1)
 
         #PENSAR NAQUELES CASOS DE DESEMPATE
-        tem_negativo, j = self.tem_ci_negativo(c)
+        tem_negativo, j = self.tem_ci_negativo(self.c_PL)
 
         while(tem_negativo):
             #Achar a linha na coluna j com a menor razao b/A
@@ -187,69 +172,165 @@ class Simplex:
             linha_pivo = 0
             coluna_pivo = 0
             
-            ilimitada = 0
+            #ilimitada = 0
 
             for i in range(self.n): #i é linha
-                if(A[i][j] > 0.0 and b[i]/A[i][j] < razao):
+                if(self.A_aux[i][j] > 0.0 and self.b_aux[i]/self.A_aux[i][j] < razao):
                     linha_pivo = i
                     coluna_pivo = j
-                    razao = b[i]/A[i][j]
-                elif(A[i][j] < 0.0 or A[i][j] == 0.0):
-                    ilimitada += 1
+                    razao = self.b_aux[i]/self.A_aux[i][j]
+                elif(self.A_aux[i][j] < 0.0 or self.A_aux[i][j] == 0.0):
+                    #ilimitada += 1
+                    pass
 
-            if(ilimitada == self.n):
-                self.certificado_ilimitada = j
-                self.print_tableau(tipo)
-                self.print_ilimitada()
+            #if(ilimitada == self.n):
+            if(False):
+                pass
+                #self.certificado_ilimitada = j
+                #self.print_tableau(tipo)
+                #self.print_ilimitada()
             
-                return
+                #return
             else:    
                 #Pivotear: Eliminacao Gaussiana de forma que apenas A[linha_pivo][coluna_pivo] seja 1 e o restante da coluna seja 0
-                pivo = A[linha_pivo][coluna_pivo]
-                extensao[linha_pivo] /= pivo #talvez nem precise disso pois não faz parte do exercício
-                A[linha_pivo] /= pivo
-                b[linha_pivo] /= pivo
+                pivo = self.A_aux[linha_pivo][coluna_pivo]
+                self.extensao_aux[linha_pivo] /= pivo #talvez nem precise disso pois não faz parte do exercício
+                self.A_aux[linha_pivo] /= pivo
+                self.b_aux[linha_pivo] /= pivo
 
                 print("\n\nPIVOTEANDO")
-                self.print_tableau(tipo)
+                self.print_tableau("aux")
 
-                valor_op = -1*c[coluna_pivo]
+                valor_op = -1*self.c_PL[coluna_pivo]
                     
-                certificado_otimo += valor_op*extensao[linha_pivo][:]   
-                c += valor_op*A[linha_pivo][:]
-                if(tipo == "aux"):
-                    self.val_obj_aux += valor_op*b[linha_pivo]
-                else:
-                    print("a somar :",valor_op*b[linha_pivo])
-                    print("val obj :",self.val_obj_tb)
-                    self.val_obj_tb += valor_op*b[linha_pivo]
+                self.certificado_otimo_original += valor_op*self.extensao_aux[linha_pivo][:]   
+                self.c_PL += valor_op*self.A_aux[linha_pivo][:]
+                #if(tipo == "aux"):
+                self.val_obj_original += valor_op*self.b_aux[linha_pivo]
+                #else:
+                    #print("a somar :",valor_op*b[linha_pivo])
+                    #print("val obj :",self.val_obj_tb)
+                #aaaaaaaaaaaaaaaaaaaaaaaaaaa self.val_obj_tb += valor_op*b[linha_pivo]
 
                 print("\n\nZERANDO PRIMEIRA LINHA")
-                self.print_tableau(tipo)
+                self.print_tableau("original")
 
                 for i in range(self.n):
                     if(i != linha_pivo):
-                        elemento = A[i][coluna_pivo]
+                        elemento = self.A_aux[i][coluna_pivo]
 
                         if(np.sign(elemento) == 1 or np.sign(elemento) == -1):
                             valor_op = -1*elemento
                                 
-                            extensao[i][:] += valor_op*extensao[linha_pivo][:] 
-                            A[i][:] += valor_op*A[linha_pivo][:]
-                            b[i] += valor_op*b[linha_pivo]
+                            self.extensao_aux[i][:] += valor_op*self.extensao_aux[linha_pivo][:] 
+                            self.A_aux[i][:] += valor_op*self.A_aux[linha_pivo][:]
+                            self.b_aux[i] += valor_op*self.b_aux[linha_pivo]
                         else:
                             continue
 
                 print("\n\nZERANDO DEMAIS LINHAS")
-                self.print_tableau(tipo)
+                self.print_tableau("original")
 
-                tem_negativo, j = self.tem_ci_negativo(c)
+                tem_negativo, j = self.tem_ci_negativo(self.c_PL)
         
         print("CONFIGURACAO FINAL")
-        self.print_tableau(tipo)
+        self.print_tableau("original")
+        
+        #if(tipo == "original"):
+            #self.print_otima()
 
-        if(tipo == "original"):
-            self.print_otima()
+
+        #self.c_PL = self.c_original_ext
+
+        #print(self.c_PL)
+    
+    def tem_ci_negativo(self, c): #ACHO QUE NAO PODIA DAR SO UMA PASSADA POIS PODE SURGIR NEGATIVOS ATRAS. Pensar em um caso que acontece isso
+        for j in range ((self.m)+self.n): #j é coluna
+            if(c[j] < 0):
+                return True, j    
+        return False, -1
+
+    def tableau(self):#, tipo, c, A, b, extensao, certificado_otimo): #val_obj): #n e b não mudam para PL original e auxiliar
+
+        #PENSAR NAQUELES CASOS DE DESEMPATE
+        tem_negativo, j = self.tem_ci_negativo(self.c_aux)
+
+        while(tem_negativo):
+            #Achar a linha na coluna j com a menor razao b/A
+            razao = 2**10
+            linha_pivo = 0
+            coluna_pivo = 0
+            
+            #ilimitada = 0
+
+            for i in range(self.n): #i é linha
+                if(self.A_aux[i][j] > 0.0 and self.b_aux[i]/self.A_aux[i][j] < razao):
+                    linha_pivo = i
+                    coluna_pivo = j
+                    razao = self.b_aux[i]/self.A_aux[i][j]
+                elif(self.A_aux[i][j] < 0.0 or self.A_aux[i][j] == 0.0):
+                    #ilimitada += 1
+                    pass
+
+            #if(ilimitada == self.n):
+            if(False):
+                pass
+                #self.certificado_ilimitada = j
+                #self.print_tableau(tipo)
+                #self.print_ilimitada()
+            
+                #return
+            else:    
+                #Pivotear: Eliminacao Gaussiana de forma que apenas A[linha_pivo][coluna_pivo] seja 1 e o restante da coluna seja 0
+                pivo = self.A_aux[linha_pivo][coluna_pivo]
+                self.extensao_aux[linha_pivo] /= pivo #talvez nem precise disso pois não faz parte do exercício
+                self.A_aux[linha_pivo] /= pivo
+                self.b_aux[linha_pivo] /= pivo
+
+                print("\n\nPIVOTEANDO")
+                self.print_tableau("aux")
+
+                valor_op = -1*self.c_aux[coluna_pivo]
+                valor_op_ext = -1*self.c_original_ext[coluna_pivo]
+                    
+                self.certificado_otimo_aux += valor_op*self.extensao_aux[linha_pivo][:]
+                self.certificado_otimo_original += valor_op_ext*self.extensao_aux[linha_pivo][:]   
+                self.c_aux += valor_op*self.A_aux[linha_pivo][:]
+                self.c_original_ext += valor_op_ext*self.A_aux[linha_pivo][:]
+                #if(tipo == "aux"):
+                self.val_obj_aux += valor_op*self.b_aux[linha_pivo]
+                self.val_obj_original += valor_op_ext*self.b_aux[linha_pivo]
+                #else:
+                    #print("a somar :",valor_op*b[linha_pivo])
+                    #print("val obj :",self.val_obj_tb)
+                #aaaaaaaaaaaaaaaaaaaaaaaaaaa self.val_obj_tb += valor_op*b[linha_pivo]
+
+                print("\n\nZERANDO PRIMEIRA LINHA")
+                self.print_tableau("aux")
+
+                for i in range(self.n):
+                    if(i != linha_pivo):
+                        elemento = self.A_aux[i][coluna_pivo]
+
+                        if(np.sign(elemento) == 1 or np.sign(elemento) == -1):
+                            valor_op = -1*elemento
+                                
+                            self.extensao_aux[i][:] += valor_op*self.extensao_aux[linha_pivo][:] 
+                            self.A_aux[i][:] += valor_op*self.A_aux[linha_pivo][:]
+                            self.b_aux[i] += valor_op*self.b_aux[linha_pivo]
+                        else:
+                            continue
+
+                print("\n\nZERANDO DEMAIS LINHAS")
+                self.print_tableau("aux")
+
+                tem_negativo, j = self.tem_ci_negativo(self.c_aux)
+        
+        print("CONFIGURACAO FINAL")
+        self.print_tableau("aux")
+        
+        #if(tipo == "original"):
+            #self.print_otima()
     
 
 

@@ -5,6 +5,7 @@ from simplex import Simplex
 #leitura com arquivo ou escrito
 #correcao do output automatica ou manual
 
+#tratar arredondamentos
 
 entrada = open('standard_input.txt', 'r')
 
