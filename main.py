@@ -7,7 +7,7 @@ from simplex import Simplex
 
 #tratar arredondamentos, já que estou printando string, mas, provavelmente, tem que ser em numero
 
-entrada = open('standard_input.txt', 'r')
+entrada = open('teste4.txt', 'r') #nao especifica no pdf o formato de saida
 
 n,m = entrada.readline().split() #n restricoes ; m variaveis
 n = int(n)
