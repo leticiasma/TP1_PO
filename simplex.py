@@ -13,15 +13,15 @@ class Simplex:
     def print_tableau(self, tipo): #melhorar duplicacao
 
         if(tipo == "simples"):
-            print(self.certif_otimalidade_PL,"|",self.c_PL,"|",self.val_obj_PL)
+            print(self.certif_otimalidade_PL," | ",self.c_PL," | ",self.val_obj_PL)
             for i in range (self.n):
-                print(self.matriz_transform[i],"|",self.A_tableau[i],"|",self.b_tableau[i])
+                print(self.matriz_transform[i],"|",self.A_tableau[i]," | ",self.b_tableau[i])
             print("\n\n")
         elif(tipo == "extendido"):
-            print(self.certif_otimalidade_PL,"|",self.c_PL,"|",self.val_obj_PL)
-            print(self.certif_otimalidade_AUX,"|",self.c_AUX,"|",self.val_obj_AUX)
+            print(self.certif_otimalidade_PL," | ",self.c_PL," | ",self.val_obj_PL)
+            print(self.certif_otimalidade_AUX," | ",self.c_AUX," | ",self.val_obj_AUX)
             for i in range (self.n):
-                print(self.matriz_transform[i],"|",self.A_tableau[i],"|",self.b_tableau[i])
+                print(self.matriz_transform[i]," | ",self.A_tableau[i]," | ",self.b_tableau[i])
             print("\n\n")
             
     def encontra_sol_atinge_max(self): #nao sei se funciona para o caso de multiplas solucaos, mais de uma sol otima
@@ -171,9 +171,9 @@ class Simplex:
         self.print_tableau("extendido")
     
     def busca_ci_negativo(self, c): #ACHO QUE NAO PODIA DAR SO UMA PASSADA POIS PODE SURGIR NEGATIVOS ATRAS. Pensar em um caso que acontece isso
-        for j in range (self.m+self.n): #j é coluna
+        for j in range ((self.m)+self.n): #j é coluna
             if(c[j] < 0):
-                return True, j    
+                return True, j #mudei isso    
         return False, -1
 
     def tableau(self):#, tipo, c, A, b, extensao, certificado_otimo): #val_obj): #n e b não mudam para PL original e auxiliar
@@ -248,6 +248,8 @@ class Simplex:
         #PENSAR NAQUELES CASOS DE DESEMPATE
         tem_ci_negativo, j = self.busca_ci_negativo(self.c_PL)
 
+        print(str(j))
+
         while(tem_ci_negativo):
             #Achar a linha na coluna j com a menor razao b/A
             razao = 2**10
@@ -255,9 +257,14 @@ class Simplex:
             coluna_pivo = 0
             
             ilimitada = 0
+            
+            print("N="+str(self.n))
+            print("num linhas A tableau="+str(self.A_tableau.shape[0]))
+            print("num linhas b tableau="+str(self.b_tableau.shape[0]))
 
             for i in range(self.n): #i é linha
                 if(self.A_tableau[i][j] > 0 and self.b_tableau[i]/self.A_tableau[i][j] < razao):
+                    print("entrou")
                     linha_pivo = i
                     coluna_pivo = j
                     razao = self.b_tableau[i]/self.A_tableau[i][j]
