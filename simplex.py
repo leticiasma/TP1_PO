@@ -2,13 +2,14 @@ import numpy as np
 
 class Simplex:
 
-    def __init__(self, n, m, c, A, b):
+    def __init__(self, n, m, c, A, b, saida):
 
         self.n = n
         self.m = m
         self.c = c
         self.A = A
         self.b = b
+        self.saida = saida
 
     def print_tableau(self, tipo): #melhorar duplicacao
 
@@ -51,7 +52,8 @@ class Simplex:
         print(solucao)
 
     def print_otima(self):
-        print("otima")
+        #print("otima")
+        self.saida.write("otima\n")
 
         print(str(self.val_obj_PL))
 
@@ -108,7 +110,6 @@ class Simplex:
         viavel = self.testa_viabilidade()
 
         if(viavel): #pensar no caso com mais de uma sol otima, que ficava 0 em cima de algo que não era solucao
-            #print("otima ou ilimitada")
             print("RESOLVENDO TB ORIGINAL REAPROVEITANDO")
             print("\n")
             self.continua_tableau_PL()
@@ -243,12 +244,11 @@ class Simplex:
     
     def continua_tableau_PL(self):
         self.c_PL = np.delete(self.c_PL, np.s_[(len(self.c_PL)-self.n):], 0)
-        self.A_tableau = np.delete(self.A_tableau, np.s_[(len(self.c_PL)-self.n):], 1)
+        #print("o tamanho do c aqui eh "+str(len(self.c_PL)))
+        self.A_tableau = np.delete(self.A_tableau, np.s_[(len(self.c_PL)):], 1)
 
         #PENSAR NAQUELES CASOS DE DESEMPATE
         tem_ci_negativo, j = self.busca_ci_negativo(self.c_PL)
-
-        print(str(j))
 
         while(tem_ci_negativo):
             #Achar a linha na coluna j com a menor razao b/A
@@ -257,14 +257,9 @@ class Simplex:
             coluna_pivo = 0
             
             ilimitada = 0
-            
-            print("N="+str(self.n))
-            print("num linhas A tableau="+str(self.A_tableau.shape[0]))
-            print("num linhas b tableau="+str(self.b_tableau.shape[0]))
 
             for i in range(self.n): #i é linha
                 if(self.A_tableau[i][j] > 0 and self.b_tableau[i]/self.A_tableau[i][j] < razao):
-                    print("entrou")
                     linha_pivo = i
                     coluna_pivo = j
                     razao = self.b_tableau[i]/self.A_tableau[i][j]
