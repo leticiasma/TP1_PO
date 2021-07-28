@@ -5,11 +5,12 @@ from simplex import Simplex
 #precisao
 #leitura com arquivo ou escrito
 #correcao do output automatica ou manual
+#usar todos os round e isclose
 
 #tratar arredondamentos, já que estou printando string, mas, provavelmente, tem que ser em numero
 
-entrada = open("teste4.txt", "r") #nao especifica no pdf o formato de saida
-saida = open("resultadoTeste4.txt", "w")
+entrada = open("teste2.txt", "r") #nao especifica no pdf o formato de saida
+saida = open("resultadoTeste2.txt", "w")
 
 n,m = entrada.readline().split() #n restricoes ; m variaveis
 n = int(n)

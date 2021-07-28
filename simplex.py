@@ -34,52 +34,52 @@ class Simplex:
                     if(self.A_tableau[j][i] == 1):
                         achou_base = True
                         if(i != self.m-1):
-                            solucao += str(self.b_tableau[j])+" "
+                            solucao += str(round(self.b_tableau[j], 7))+" "
                         else:
-                            solucao += str(self.b_tableau[j])
+                            solucao += str(round(self.b_tableau[j], 7))
                 
                 if(not achou_base):
                     if(i != self.m-1):
-                        solucao += "0 " 
+                        solucao += "0.0 " 
                     else:
-                        solucao += "0"                   
+                        solucao += "0.0"                   
             else:
                 if(i != self.m-1):
-                    solucao += "0 " 
+                    solucao += "0.0 " 
                 else:
-                    solucao += "0"
+                    solucao += "0.0"
         
-        print(solucao)
+        self.saida.write(solucao+"\n")
 
     def print_otima(self):
-        #print("otima")
         self.saida.write("otima\n")
 
-        print(str(self.val_obj_PL))
+        self.saida.write(str(round(self.val_obj_PL, 7))+"\n") #nao precisa ser em float??
 
         self.encontra_sol_atinge_max()
         
         certificado = ""
         for i in range(self.n):
             if(i != self.n-1):
-                certificado += str(self.certif_otimalidade_PL[i])+" "
+                certificado += str(round(self.certif_otimalidade_PL[i], 7))+" "
             else:
-                certificado += str(self.certif_otimalidade_PL[i])
-        print(certificado)
+                certificado += str(round(self.certif_otimalidade_PL[i], 7))
+        self.saida.write(certificado)
 
     def print_inviavel(self):
-        print("inviavel")
+        self.saida.write("inviavel\n")
 
         certificado = ""
         for i in range(self.n):
             if(i != self.n-1):
-                certificado += str(self.certif_otimalidade_AUX[i])+" "
+                certificado += str(round(self.certif_otimalidade_AUX[i], 7))+" "
             else:
-                certificado += str(self.certif_otimalidade_AUX[i])
-        print(certificado) #Printa como float... No PDF é int, mas não sei se tem caso float de verdade, acho que sim
+                certificado += str(round(self.certif_otimalidade_AUX[i], 7))
+        self.saida.write(certificado) #Printa como float... No PDF é int, mas não sei se tem caso float de verdade, acho que sim
 
+    # sempre que todos os coeficientes da coluna correspondente de uma vari´avel candidata forem n˜ao-positivos (ou sejam negativos ou zero
     def print_ilimitada(self): #NÃO SEI SE ILIMITADA APARECE NO MEIO DO TABLEAU... ACHO QUE SIM, MAS NÃO ACHEI EXEMPLOS DE TESTE
-        print("ilimitada")
+        self.saida.write("ilimitada\n")
         #Falta printar uma Sol Viavel!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!aaaaaaaaa
         certificado = ""
         certificado += str(-1*self.c_PL[self.certificado_ilimitada])+" "
@@ -89,7 +89,7 @@ class Simplex:
                 certificado += str(-1*self.A_tableau[i][self.certificado_ilimitada])+" "
             else:
                 certificado += str(-1*self.A_tableau[i][self.certificado_ilimitada])
-        print(certificado)
+        self.saida.write(certificado)
 
     def testa_viabilidade(self):
 
@@ -264,7 +264,7 @@ class Simplex:
                     coluna_pivo = j
                     razao = self.b_tableau[i]/self.A_tableau[i][j]
 
-                elif(self.A_tableau[i][j] < 0 or self.A_tableau[i][j] == 0):
+                elif(self.A_tableau[i][j] < 0 or self.A_tableau[i][j] == 0): #<=
                     ilimitada += 1
 
             if(ilimitada == self.n):
