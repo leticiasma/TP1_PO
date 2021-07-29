@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.core.numeric import isclose
-import functools
+#import functools
 import math
 
 class Simplex:
@@ -45,7 +45,7 @@ class Simplex:
                 for j in range(self.n):
                     #if functools.reduce(lambda x, y : x and y, map(lambda p, q: p == q,canonicos[:][j],vetor_aux), True):                     
                     #if ((canonicos[:][j] == vetor_aux).all()):
-                    if (canonicos[:][j] == vetor_aux):
+                    if (canonicos[:][j] == vetor_aux).all():
 
                         achou_base = True
                         
