@@ -1,13 +1,5 @@
 import numpy as np
 from simplex import Simplex
-#from simplexteste import Simplex
-
-#precisao
-#correcao do output automatica ou manual
-#usar todos os round e isclose
-#guardar quais colunas fazem parte da base acho melhor na hora de achar a solucao na funcao q eu fiz
-
-#tratar arredondamentos, já que estou printando string, mas, provavelmente, tem que ser em numero
 
 n,m = input().split() #n restricoes ; m variaveis
 n = int(n)
